@@ -10,6 +10,10 @@ const rateLimit = require("express-rate-limit");
 const { body, validationResult } = require("express-validator");
 const mongoSanitize = require("express-mongo-sanitize");
 
+const logAdminAction = require("./middleware/auditLogger.js");
+
+const auditRoutes = require("./routes/auditRoutes.js");
+
 const app = express();
 const PORT = process.env.PORT || 4005;
 const MONGO_URI = process.env.MONGO_URI;
@@ -26,6 +30,7 @@ app.use(
   })
 );
 
+app.use("/api", require("./routes/auditRoutes"));
 // Enhanced MongoDB sanitization
 app.use(
   mongoSanitize({
@@ -35,6 +40,7 @@ app.use(
     },
   })
 );
+app.use("/api/audit-logs", auditRoutes);
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -150,6 +156,12 @@ const Product = mongoose.model("Product", productSchema);
 
 // Authentication Middleware
 const authenticateToken = (req, res, next) => {
+  const openRoutes = ["/addproduct", "/upload", "/allproducts"]; // Add routes that should NOT require authentication
+
+  if (openRoutes.includes(req.path)) {
+    return next(); // Skip authentication for these routes
+  }
+
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
@@ -160,13 +172,15 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Use process.env for better security
     req.user = decoded;
     next();
   } catch (error) {
     res.status(403).json({ success: false, message: "Invalid token." });
   }
 };
+
+module.exports = authenticateToken;
 
 // Signup Route with Enhanced Validation
 app.post(
@@ -236,6 +250,7 @@ app.post(
 // Login Route with Enhanced Security
 app.post(
   "/login",
+
   [
     body("email")
       .trim()
@@ -287,7 +302,7 @@ app.post(
 );
 
 // Product Routes with Enhanced Security
-app.post("/addproduct", authenticateToken, async (req, res) => {
+app.post("/addproduct", async (req, res) => {
   try {
     const { name, image, category, new_price, old_price } = req.body;
 
@@ -330,6 +345,7 @@ app.post("/addproduct", authenticateToken, async (req, res) => {
       message: "Product added successfully",
       product,
     });
+    await logAdminAction("Product Added", `Added product: ${name}`, req);
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -338,7 +354,7 @@ app.post("/addproduct", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/removeproduct", authenticateToken, async (req, res) => {
+app.post("/removeproduct", async (req, res) => {
   try {
     const { id } = req.body;
 
@@ -357,6 +373,12 @@ app.post("/removeproduct", authenticateToken, async (req, res) => {
         message: "Product not found",
       });
     }
+    await logAdminAction(
+      req.user.id,
+      "Product Removed",
+      `Removed product: ${deletedProduct.name}`,
+      req
+    );
 
     res.json({
       success: true,
@@ -469,7 +491,7 @@ app.use(
 );
 
 // Secure File Upload Endpoint
-app.post("/upload", authenticateToken, upload.single("product"), (req, res) => {
+app.post("/upload", upload.single("product"), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
