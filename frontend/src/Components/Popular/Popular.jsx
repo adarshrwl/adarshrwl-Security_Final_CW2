@@ -14,7 +14,7 @@ const Popular = () => {
         return response.json();
       })
       .then((data) => {
-        console.log("API Response:", data); // ✅ Debugging Log
+        // console.log("API Response:", data); // ✅ Debugging Log
         if (Array.isArray(data)) {
           setPopularProducts(data); // ✅ Only update state if data is an array
         } else {

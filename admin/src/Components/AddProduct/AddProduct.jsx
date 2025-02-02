@@ -36,7 +36,7 @@ const AddProduct = () => {
       let formData = new FormData();
       formData.append("product", image);
 
-      console.log("Uploading Image...");
+    //   console.log("Uploading Image...");
 
       const imageUploadResponse = await fetch("http://localhost:4005/upload", {
         method: "POST",
@@ -58,7 +58,7 @@ const AddProduct = () => {
       product.new_price = parseFloat(product.new_price) || 0;
       product.old_price = parseFloat(product.old_price) || 0;
 
-      console.log("Adding Product...", product);
+    //   console.log("Adding Product...", product);
 
       const addProductResponse = await fetch(
         "http://localhost:4005/addproduct",

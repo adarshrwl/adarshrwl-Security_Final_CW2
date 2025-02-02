@@ -13,7 +13,7 @@ const AuditLogs = () => {
       const response = await fetch("http://localhost:4005/api/logs");
       const data = await response.json();
 
-      console.log("Fetched Data:", data); // Debugging
+      // console.log("Fetched Data:", data); // Debugging
 
       if (data.success && Array.isArray(data.data)) {
         setLogs(data.data);
@@ -28,7 +28,7 @@ const AuditLogs = () => {
   };
 
   useEffect(() => {
-    console.log("Updated Logs:", logs); // Debugging State
+    // console.log("Updated Logs:", logs); // Debugging State
   }, [logs]);
 
   return (
@@ -56,7 +56,7 @@ const AuditLogs = () => {
           </thead>
           <tbody>
             {logs.map((log, index) => {
-              console.log("Rendering Log:", log); // Debugging each log
+              // console.log("Rendering Log:", log); // Debugging each log
               return (
                 <tr
                   key={log._id}

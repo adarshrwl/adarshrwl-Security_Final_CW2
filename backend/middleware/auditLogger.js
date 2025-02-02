@@ -59,7 +59,7 @@ const logAdminAction = async (
     });
 
     await auditLog.save();
-    console.log(`Audit log created: ${action}`);
+    // console.log(`Audit log created: ${action}`);
   } catch (error) {
     console.error("Error creating audit log:", error);
     // Don't throw the error - we don't want to break the main operation if logging fails

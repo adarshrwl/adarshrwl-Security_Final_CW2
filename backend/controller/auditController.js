@@ -31,7 +31,7 @@ exports.createAuditLog = async (adminId, action, details, ipAddress) => {
     });
 
     await log.save();
-    console.log("Audit log stored:", log);
+    // console.log("Audit log stored:", log);
   } catch (error) {
     console.error("Error creating audit log:", error);
   }

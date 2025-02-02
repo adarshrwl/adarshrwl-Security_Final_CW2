@@ -41,7 +41,7 @@ const LoginSignup = () => {
   };
 
   const login = async (data) => {
-    console.log("Login Function Executed", data);
+    // console.log("Login Function Executed", data);
     try {
       const response = await fetch("http://localhost:4005/login", {
         method: "POST",
@@ -68,7 +68,7 @@ const LoginSignup = () => {
   };
 
   const signup = async (data) => {
-    console.log("Signup Function Executed", data);
+    // console.log("Signup Function Executed", data);
     try {
       const response = await fetch("http://localhost:4005/signup", {
         method: "POST",
