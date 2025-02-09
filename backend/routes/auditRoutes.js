@@ -1,9 +1,7 @@
-// routes/auditRoutes.js
-
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
-const AuditLog = mongoose.model("AuditLog");
+const AuditLog = require("../models/AuditLog"); // Import the AuditLog model
+
 // Get audit logs with pagination and filtering
 router.get("/logs", async (req, res) => {
   try {
@@ -25,16 +23,14 @@ router.get("/logs", async (req, res) => {
       };
     }
 
-    const logs = await mongoose
-      .model("AuditLog")
-      .find(query)
+    const logs = await AuditLog.find(query)
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("userId", "name email")
+      .populate("userId", "name email") // Populate userId field with user name and email
       .lean();
 
-    const total = await mongoose.model("AuditLog").countDocuments(query);
+    const total = await AuditLog.countDocuments(query);
 
     res.json({
       success: true,
@@ -46,6 +42,7 @@ router.get("/logs", async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error); // Log the error for debugging
     res.status(500).json({
       success: false,
       message: "Error fetching audit logs",

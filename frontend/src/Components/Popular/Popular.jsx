@@ -6,7 +6,8 @@ const Popular = () => {
   const [popularProducts, setPopularProducts] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:4005/popularinwomen")
+    // Update the fetch URL to match the backend route
+    fetch("http://localhost:4005/api/products/popularinwomen")
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -14,17 +15,17 @@ const Popular = () => {
         return response.json();
       })
       .then((data) => {
-        // console.log("API Response:", data); // ✅ Debugging Log
+        // Ensure the API response is valid before updating the state
         if (Array.isArray(data)) {
-          setPopularProducts(data); // ✅ Only update state if data is an array
+          setPopularProducts(data);
         } else {
           console.error("Invalid API response format:", data);
-          setPopularProducts([]); // ✅ Prevent errors by setting an empty array
+          setPopularProducts([]);
         }
       })
       .catch((error) => {
         console.error("Error fetching popular products:", error);
-        setPopularProducts([]); // ✅ Prevent frontend crash
+        setPopularProducts([]); // Prevent frontend crash
       });
   }, []);
 
@@ -45,7 +46,7 @@ const Popular = () => {
             />
           ))
         ) : (
-          <p>Loading popular products...</p> // ✅ Prevents crash if data is not available
+          <p>Loading popular products...</p>
         )}
       </div>
     </div>

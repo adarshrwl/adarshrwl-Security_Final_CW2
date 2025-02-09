@@ -12,6 +12,7 @@ const AddProduct = () => {
     image: "",
   });
 
+  // Handle image file selection
   const imageHandler = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -19,34 +20,34 @@ const AddProduct = () => {
     }
   };
 
+  // Handle input changes for product details
   const changeHandler = (e) => {
     setProductDetails({ ...productDetails, [e.target.name]: e.target.value });
   };
 
   const Add_Product = async () => {
     try {
-      let responseData;
-      let product = { ...productDetails };
-
       if (!image) {
         alert("Please upload an image.");
         return;
       }
 
-      let formData = new FormData();
+      // Upload image to backend
+      const formData = new FormData();
       formData.append("product", image);
 
-    //   console.log("Uploading Image...");
+      const imageUploadResponse = await fetch(
+        "http://localhost:4005/api/files/upload", // Use the backend's full URL
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+          },
+          body: formData,
+        }
+      );
 
-      const imageUploadResponse = await fetch("http://localhost:4005/upload", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
-        body: formData,
-      });
-
-      responseData = await imageUploadResponse.json();
+      const responseData = await imageUploadResponse.json();
 
       if (!imageUploadResponse.ok || !responseData.success) {
         console.error("Image Upload Failed:", responseData);
@@ -54,14 +55,16 @@ const AddProduct = () => {
         return;
       }
 
-      product.image = responseData.image_url;
-      product.new_price = parseFloat(product.new_price) || 0;
-      product.old_price = parseFloat(product.old_price) || 0;
-
-    //   console.log("Adding Product...", product);
+      // Add product details
+      const product = {
+        ...productDetails,
+        image: responseData.image_url, // URL from the uploaded image response
+        new_price: parseFloat(productDetails.new_price) || 0,
+        old_price: parseFloat(productDetails.old_price) || 0,
+      };
 
       const addProductResponse = await fetch(
-        "http://localhost:4005/addproduct",
+        "http://localhost:4005/api/products/addproduct", // Use the backend's full URL
         {
           method: "POST",
           headers: {

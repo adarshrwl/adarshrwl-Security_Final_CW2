@@ -43,7 +43,7 @@ const LoginSignup = () => {
   const login = async (data) => {
     // console.log("Login Function Executed", data);
     try {
-      const response = await fetch("http://localhost:4005/login", {
+      const response = await fetch("http://localhost:4005/api/auth/login", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -69,8 +69,10 @@ const LoginSignup = () => {
 
   const signup = async (data) => {
     // console.log("Signup Function Executed", data);
+    console.log(data);
+
     try {
-      const response = await fetch("http://localhost:4005/signup", {
+      const response = await fetch("http://localhost:4005/api/auth/signup", {
         method: "POST",
         headers: {
           Accept: "application/json",

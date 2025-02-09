@@ -15,23 +15,31 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState(getDefaultCart());
 
   useEffect(() => {
-    fetch("http://localhost:4005/allproducts")
-      .then((res) => res.json())
+    // Fetch all products
+    fetch("http://localhost:4005/api/products/allproducts")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
+      })
       .then((data) => setAll_Product(data))
-      .catch((err) => console.error("Fetch error:", err));
+      .catch((err) => console.error("Fetch error (allproducts):", err));
 
+    // Fetch cart items if user is logged in
     if (localStorage.getItem("auth-token")) {
-      fetch("http://localhost:4005/getcart", {
+      fetch("http://localhost:4005/api/cart/getcart", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `${localStorage.getItem("auth-token")}`,
         },
-        body: JSON.stringify({}), // ✅ Fixed empty request body issue
+        body: JSON.stringify({}), // Empty request body
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch cart items");
+          return res.json();
+        })
         .then((data) => setCartItems(data))
-        .catch((err) => console.error("Fetch error:", err));
+        .catch((err) => console.error("Fetch error (getcart):", err));
     }
   }, []);
 
@@ -39,17 +47,20 @@ const ShopContextProvider = (props) => {
     setCartItems((prev) => ({ ...prev, [itemId]: (prev[itemId] || 0) + 1 }));
 
     if (localStorage.getItem("auth-token")) {
-      fetch("http://localhost:4005/addtocart", {
+      fetch("http://localhost:4005/api/cart/addtocart", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `${localStorage.getItem("auth-token")}`,
         },
-        body: JSON.stringify({ itemId }), // ✅ Corrected request body
+        body: JSON.stringify({ itemId }), // Include itemId in the body
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to add to cart");
+          return res.json();
+        })
         .then((data) => console.log("Added to cart:", data))
-        .catch((err) => console.error("Fetch error:", err));
+        .catch((err) => console.error("Fetch error (addtocart):", err));
     }
   };
 
@@ -60,7 +71,7 @@ const ShopContextProvider = (props) => {
     }));
 
     if (localStorage.getItem("auth-token")) {
-      fetch("http://localhost:4005/removefromcart", {
+      fetch("http://localhost:4005/api/cart/removefromcart", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -68,9 +79,12 @@ const ShopContextProvider = (props) => {
         },
         body: JSON.stringify({ itemId }),
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to remove from cart");
+          return res.json();
+        })
         .then((data) => console.log("Removed from cart:", data))
-        .catch((err) => console.error("Fetch error:", err));
+        .catch((err) => console.error("Fetch error (removefromcart):", err));
     }
   };
 

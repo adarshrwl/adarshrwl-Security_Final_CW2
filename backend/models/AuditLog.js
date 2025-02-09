@@ -1,16 +1,11 @@
 const mongoose = require("mongoose");
 
-// const auditLogSchema = new mongoose.Schema({
-//   adminId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: "User",
-//     required: true,
-//   },
-//   action: { type: String, required: true }, // Example: "Product Added"
-//   details: { type: String }, // Extra info about the action
-//   ipAddress: { type: String }, // Capturing IP for tracking
-//   timestamp: { type: Date, default: Date.now },
-// });
+const auditLogSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "Users" }, // Assuming Users is your user model
+  action: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  details: { type: String }, // Optional: Additional details about the action
+});
 
-// ✅ Correctly export the model
+// Register the schema with Mongoose
 module.exports = mongoose.model("AuditLog", auditLogSchema);
