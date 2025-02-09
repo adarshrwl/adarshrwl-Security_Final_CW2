@@ -15,7 +15,7 @@ app.set("trust proxy", 1);
 // Rate limiting middleware
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 15, // Limit each IP to 100 requests per window
+  max: 200, // Limit each IP to 100 requests per window
   handler: (req, res) => {
     res.status(429).json({
       success: false,
