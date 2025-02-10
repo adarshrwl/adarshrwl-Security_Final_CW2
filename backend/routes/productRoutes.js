@@ -3,8 +3,23 @@ const Product = require("../models/Product");
 
 const router = express.Router();
 
-// Add product
-router.post("/addproduct", async (req, res) => {
+// Middleware to restrict access to admin routes based on Origin
+const restrictToAdminPort = (req, res, next) => {
+  const allowedOrigin = `http://localhost:5173`;
+  const origin = req.headers.origin;
+
+  if (origin !== allowedOrigin) {
+    return res.status(403).json({
+      success: false,
+      message:
+        "Access denied. This route is restricted to admin requests only.",
+    });
+  }
+  next();
+};
+
+// Add product (Admin only)
+router.post("/addproduct", restrictToAdminPort, async (req, res) => {
   try {
     const { name, image, category, new_price, old_price } = req.body;
 
@@ -54,8 +69,8 @@ router.post("/addproduct", async (req, res) => {
   }
 });
 
-// Remove product
-router.post("/removeproduct", async (req, res) => {
+// Remove product (Admin only)
+router.post("/removeproduct", restrictToAdminPort, async (req, res) => {
   try {
     const { id } = req.body;
     const productId = parseInt(id, 10);
@@ -112,6 +127,8 @@ router.get("/allproducts", async (req, res) => {
       .json({ success: false, message: "Error fetching products" });
   }
 });
+
+// Popular in Women (No restriction)
 router.get("/popularinwomen", async (req, res) => {
   try {
     const products = await Product.find({
@@ -131,6 +148,7 @@ router.get("/popularinwomen", async (req, res) => {
   }
 });
 
+// New Collections (No restriction)
 router.get("/newcollections", async (req, res) => {
   try {
     const products = await Product.find({ available: true })

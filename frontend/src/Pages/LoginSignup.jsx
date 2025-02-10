@@ -28,6 +28,7 @@ const schema = yup.object().shape({
 
 const LoginSignup = () => {
   const [state, setState] = useState("Login");
+  const [loading, setLoading] = useState(false);
 
   // ✅ Use React Hook Form for state management
   const {
@@ -42,68 +43,53 @@ const LoginSignup = () => {
 
   // ✅ Handle Form Submission
   const onSubmit = async (data) => {
+    setLoading(true);
     if (state === "Login") {
-      await login(data);
+      await handleAuthRequest(data, "login");
     } else {
-      await signup(data);
+      await handleAuthRequest(data, "signup");
     }
+    setLoading(false);
   };
 
-  const login = async (data) => {
+  // ✅ Login/Signup Request Handler
+  const handleAuthRequest = async (data, action) => {
+    const url =
+      action === "login"
+        ? "http://localhost:4005/api/auth/login"
+        : "http://localhost:4005/api/auth/signup";
+
     try {
-      const response = await fetch("http://localhost:4005/api/auth/login", {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
+        credentials: "include", // Required for cookies (refresh token)
       });
 
       const responseData = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("auth-token", responseData.token);
-        toast.success("Login Successful!");
+        const { accessToken } = responseData;
+        localStorage.setItem("auth-token", accessToken); // Store token in memory/localStorage
+        toast.success(`${action === "login" ? "Login" : "Signup"} Successful!`);
         setTimeout(() => window.location.replace("/"), 1500);
       } else {
-        toast.error(responseData.message || "Login failed");
-      }
-    } catch (error) {
-      console.error("Login Error:", error);
-      toast.error("Something went wrong. Please try again.");
-    }
-  };
-
-  const signup = async (data) => {
-    try {
-      const response = await fetch("http://localhost:4005/api/auth/signup", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const responseData = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("auth-token", responseData.token);
-        toast.success("Signup Successful!");
-        setTimeout(() => window.location.replace("/"), 1500);
-      } else {
+        // Handle errors
         if (responseData.errors) {
           const errorMessages = responseData.errors
             .map((err) => err.msg)
             .join("\n");
           toast.error(errorMessages);
         } else {
-          toast.error(responseData.message || "Signup failed");
+          toast.error(responseData.message || `${action} failed`);
         }
       }
     } catch (error) {
-      console.error("Signup Error:", error);
+      console.error(`${action} Error:`, error);
       toast.error("Something went wrong. Please try again.");
     }
   };
@@ -150,7 +136,9 @@ const LoginSignup = () => {
             </div>
           </div>
 
-          <button type="submit">Continue</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Processing..." : "Continue"}
+          </button>
         </form>
 
         {/* Switch Between Login and Signup */}

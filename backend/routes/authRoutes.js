@@ -6,7 +6,28 @@ const Users = require("../models/Users");
 
 const router = express.Router();
 
-// Signup route
+// Generate Access Token
+const generateAccessToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined");
+  }
+  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "15m",
+  });
+};
+
+const generateRefreshToken = (user) => {
+  if (!process.env.REFRESH_SECRET) {
+    throw new Error("REFRESH_SECRET is not defined");
+  }
+  return jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, {
+    expiresIn: "7d",
+  });
+};
+
+// Store refresh tokens securely (e.g., in a database or in-memory)
+let refreshTokens = [];
+
 // Signup route
 router.post(
   "/signup",
@@ -33,7 +54,6 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // Send detailed validation errors to the frontend
       return res.status(400).json({
         success: false,
         message: "Validation failed.",
@@ -66,16 +86,23 @@ router.post(
 
       await user.save();
 
-      // Generate JWT token
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "24h",
-      });
+      // Generate tokens
+      const accessToken = generateAccessToken(user);
+      const refreshToken = generateRefreshToken(user);
 
-      // Send success response
+      // Store the refresh token
+      refreshTokens.push(refreshToken);
+
+      // Send tokens
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
       res.status(201).json({
         success: true,
         message: "User created successfully. Welcome!",
-        token,
+        accessToken,
       });
     } catch (error) {
       console.error("Error during signup:", error);
@@ -92,8 +119,8 @@ router.post(
 router.post(
   "/login",
   [
-    body("email").trim().isEmail().normalizeEmail(),
-    body("password").trim().notEmpty(),
+    body("email").trim().isEmail().withMessage("Valid email is required"),
+    body("password").trim().notEmpty().withMessage("Password is required"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -121,15 +148,71 @@ router.post(
           .json({ success: false, message: "Invalid credentials" });
       }
 
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "24h",
-      });
+      // Generate tokens
+      const accessToken = generateAccessToken(user);
+      const refreshToken = generateRefreshToken(user);
 
-      res.json({ success: true, token });
+      // Store the refresh token
+      refreshTokens.push(refreshToken);
+
+      // Send tokens
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+      res.json({ success: true, accessToken });
     } catch (error) {
+      console.error("Error during login:", error);
       res.status(500).json({ success: false, message: "Error during login" });
     }
   }
 );
+
+// Refresh Token route
+router.get("/refresh-token", (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token is missing. Please log in again.",
+    });
+  }
+
+  if (!refreshTokens.includes(refreshToken)) {
+    return res.status(403).json({
+      success: false,
+      message: "Invalid refresh token. Please log in again.",
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+    const newAccessToken = generateAccessToken({ id: decoded.id });
+    res.json({ success: true, accessToken: newAccessToken });
+  } catch (error) {
+    console.error("Error during token refresh:", error);
+    res.status(403).json({
+      success: false,
+      message: "Invalid or expired refresh token. Please log in again.",
+    });
+  }
+});
+
+// Logout route
+router.post("/logout", (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No token to log out." });
+  }
+
+  // Remove refresh token
+  refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+
+  res.clearCookie("refreshToken");
+  res.json({ success: true, message: "Logged out successfully." });
+});
 
 module.exports = router;

@@ -16,15 +16,26 @@ const ListProduct = () => {
   }, []);
 
   const remove_product = async (id) => {
-    await fetch("http://localhost:4005/api/products/removeproduct", {
-      method: "POSt",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: id }),
-    });
-    await fetchInfo();
+    // Show confirmation popup
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this item?"
+    );
+
+    if (confirmDelete) {
+      // Proceed with deletion if confirmed
+      await fetch("http://localhost:4005/api/products/removeproduct", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: id }),
+      });
+      await fetchInfo();
+    } else {
+      // If canceled, do nothing
+      console.log("Deletion canceled");
+    }
   };
 
   return (
@@ -42,11 +53,8 @@ const ListProduct = () => {
         <hr />
         {allproducts.map((product, index) => {
           return (
-            <>
-              <div
-                key={index}
-                className="listproduct-format-main listproduct-format"
-              >
+            <React.Fragment key={index}>
+              <div className="listproduct-format-main listproduct-format">
                 <img
                   src={product.image}
                   alt=""
@@ -61,12 +69,12 @@ const ListProduct = () => {
                     remove_product(product.id);
                   }}
                   src={cross_icon}
-                  alt=""
+                  alt="Remove"
                   className="listproduct-remove-icon"
                 />
               </div>
               <hr />
-            </>
+            </React.Fragment>
           );
         })}
       </div>
