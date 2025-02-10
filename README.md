@@ -25,8 +25,3 @@ Welcome to the eCommerce website project built with the MERN stack (MongoDB, Exp
 ![Screenshot](Screenshots/home3.png)
 ![Screenshot](Screenshots/home4.png)
 ![Screenshot](Screenshots/home5.png)
-
-1. **Clone the Repository:**
-
-   ```bash
-   git clone [https://github.com/OnkarYevale07/Full-Stack-eCommerce-Website-MERN-Stack.git]
